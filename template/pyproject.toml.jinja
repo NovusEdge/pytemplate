@@ -5,8 +5,8 @@ description = "{{ description }}"
 readme = "README.md"
 requires-python = ">={{ python }}"
 {% if license != 'proprietary' %}license = { text = "{{ license }}" }
-{% endif %}authors = [{ name = "{{ author }}" }]
-dependencies = [
+{% endif %}{% if author %}authors = [{ name = "{{ author }}" }]
+{% endif %}dependencies = [
 {% for dep in runtime_deps %}    "{{ dep }}",
 {% endfor %}]
 {% if preset == 'cli' %}

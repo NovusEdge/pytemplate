@@ -49,6 +49,14 @@ def test_license_year_is_answerable(tmp_path: Path) -> None:
     assert "2031" in (out / "LICENSE").read_text()
 
 
+def test_pyproject_valid_without_author(tmp_path: Path) -> None:
+    import tomllib
+
+    out = generate(tmp_path, preset="lib", author="")
+    data = tomllib.loads((out / "pyproject.toml").read_text())
+    assert "authors" not in data["project"]
+
+
 def test_settings_present_when_pydantic(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="api")
     assert (out / "src/demo_proj/settings.py").exists()
