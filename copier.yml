@@ -18,6 +18,15 @@ project_name:
   type: str
   help: Project name, used for the directory and the distribution
 
+package_name:
+  type: str
+  help: Importable package name
+  default: "{{ project_name|lower|replace('-','_')|replace(' ','_') }}"
+  validator: >-
+    {% if not package_name.isidentifier() %}
+    package_name must be a valid Python identifier
+    {% endif %}
+
 description:
   type: str
   help: One-line description
@@ -27,3 +36,56 @@ author:
   type: str
   help: Author name
   default: ""
+
+license:
+  type: str
+  choices: [Apache-2.0, MIT, proprietary]
+  default: Apache-2.0
+
+python:
+  type: str
+  help: Target Python version
+  default: "3.13"
+
+settings:
+  type: str
+  choices: [none, pydantic]
+  default: "{{ 'none' if preset == 'lib' else 'pydantic' }}"
+
+cloud:
+  type: str
+  choices: [none, aws, gcp]
+  default: none
+  validator: >-
+    {% if cloud != 'none' and settings == 'none' %}
+    cloud requires settings=pydantic
+    {% endif %}
+
+container:
+  type: bool
+  default: "{{ preset in ['api', 'pipeline'] }}"
+
+ci:
+  type: str
+  choices: [none, github]
+  default: github
+
+publish:
+  type: bool
+  default: false
+
+py_tag:
+  type: str
+  when: false
+  default: "py{{ python|replace('.','') }}"
+
+runtime_deps:
+  type: yaml
+  when: false
+  default: >-
+    {{ ((['pydantic-settings>=2'] if settings == 'pydantic' else [])
+      + (['boto3'] if cloud == 'aws' else [])
+      + (['google-cloud-core'] if cloud == 'gcp' else [])
+      + (['typer'] if preset == 'cli' else [])
+      + (['fastapi', 'uvicorn'] if preset == 'api' else [])
+      + (['dagster'] if preset == 'pipeline' else [])) | tojson }}
