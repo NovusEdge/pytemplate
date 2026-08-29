@@ -47,3 +47,16 @@ def test_computed_values_reach_pyproject(tmp_path: Path) -> None:
 def test_license_year_is_answerable(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="lib", year="2031")
     assert "2031" in (out / "LICENSE").read_text()
+
+
+def test_settings_present_when_pydantic(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api")
+    assert (out / "src/demo_proj/settings.py").exists()
+    assert (out / ".env.example").exists()
+    assert "pydantic-settings" in (out / "pyproject.toml").read_text()
+
+
+def test_settings_absent_when_none(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib")
+    assert not (out / "src/demo_proj/settings.py").exists()
+    assert not (out / ".env.example").exists()
