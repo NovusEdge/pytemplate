@@ -175,3 +175,87 @@ def test_no_empty_workflows_dir(tmp_path: Path) -> None:
 def test_package_name_rejects_keyword(tmp_path: Path) -> None:
     with pytest.raises(ValueError):
         generate(tmp_path, preset="lib", project_name="class")
+
+
+def test_db_absent_by_default(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api")
+    assert not (out / "src/demo_proj/db.py").exists()
+    assert not (out / "src/demo_proj/models.py").exists()
+    assert not (out / "alembic").exists()
+    assert not (out / "alembic.ini").exists()
+
+
+def test_db_postgres_files_and_deps(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="cli", db="postgres")
+    assert (out / "src/demo_proj/db.py").exists()
+    assert (out / "src/demo_proj/models.py").exists()
+    assert (out / "alembic/env.py").exists()
+    assert (out / "alembic.ini").exists()
+    body = (out / "pyproject.toml").read_text()
+    assert "psycopg[binary]" in body
+    assert "sqlalchemy" in body
+    assert "alembic" in body
+
+
+def test_db_sqlite_skips_postgres_driver(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="cli", db="sqlite")
+    body = (out / "pyproject.toml").read_text()
+    assert "psycopg" not in body
+    assert "sqlalchemy" in body
+
+
+def test_api_gets_async_engine(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", db="postgres")
+    assert "create_async_engine" in (out / "src/demo_proj/db.py").read_text()
+
+
+def test_cli_gets_sync_engine(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="cli", db="postgres")
+    body = (out / "src/demo_proj/db.py").read_text()
+    assert "create_async_engine" not in body
+    assert "create_engine" in body
+
+
+def test_alembic_env_is_always_sync(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", db="postgres")
+    assert "create_async_engine" not in (out / "alembic/env.py").read_text()
+
+
+def test_sqlite_api_gets_aiosqlite(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", db="sqlite")
+    assert "aiosqlite" in (out / "pyproject.toml").read_text()
+
+
+def test_redis_opt_in(tmp_path: Path) -> None:
+    off = generate(tmp_path / "a", preset="api")
+    on = generate(tmp_path / "b", preset="api", redis=True)
+    assert not (off / "src/demo_proj/cache.py").exists()
+    assert (on / "src/demo_proj/cache.py").exists()
+    assert "redis>=5.0" in (on / "pyproject.toml").read_text()
+
+
+def test_db_requires_settings(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        generate(tmp_path, preset="lib", db="postgres", settings="none")
+
+
+def test_redis_requires_settings(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        generate(tmp_path, preset="lib", redis=True, settings="none")
+
+
+def test_db_settings_fields(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", db="postgres", redis=True)
+    body = (out / "src/demo_proj/settings.py").read_text()
+    assert "database_url" in body
+    assert "redis_url" in body
+    env = (out / ".env.example").read_text()
+    assert "DEMO_PROJ_DATABASE_URL" in env
+    assert "DEMO_PROJ_REDIS_URL" in env
+
+
+def test_compose_gains_services(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", db="postgres", redis=True)
+    body = (out / "compose.yaml").read_text()
+    assert "postgres:" in body
+    assert "redis:" in body

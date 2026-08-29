@@ -1,0 +1,33 @@
+default: check
+
+sync:
+    uv sync
+
+fmt:
+    uv run ruff format .
+    uv run ruff check --fix .
+
+lint:
+    uv run ruff check .
+    uv run mypy src
+
+test *ARGS:
+    uv run pytest {% raw %}{{ARGS}}{% endraw %}
+
+check: lint test
+{% if db != 'none' %}
+# Apply all pending migrations
+migrate:
+    uv run alembic upgrade head
+
+# Autogenerate a migration. The database must be reachable.
+revision MESSAGE:
+    uv run alembic revision --autogenerate -m "{% raw %}{{MESSAGE}}{% endraw %}"
+
+# Roll back the most recent migration
+downgrade:
+    uv run alembic downgrade -1
+{% endif %}
+clean:
+    rm -rf .pytest_cache .mypy_cache .ruff_cache dist
+    find . -name __pycache__ -type d -prune -exec rm -rf {% raw %}{}{% endraw %} +

@@ -1,0 +1,51 @@
+{% if db_async %}from collections.abc import AsyncIterator
+from functools import cache
+
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+
+from .settings import settings
+
+
+@cache
+def get_engine() -> AsyncEngine:
+    return create_async_engine(settings.database_url)
+
+
+@cache
+def get_sessionmaker() -> async_sessionmaker[AsyncSession]:
+    return async_sessionmaker(get_engine(), expire_on_commit=False)
+
+
+async def session() -> AsyncIterator[AsyncSession]:
+    async with get_sessionmaker()() as s:
+        yield s
+{% else %}from collections.abc import Iterator
+from contextlib import contextmanager
+from functools import cache
+
+from sqlalchemy import Engine, create_engine
+from sqlalchemy.orm import Session, sessionmaker
+
+from .settings import settings
+
+
+@cache
+def get_engine() -> Engine:
+    return create_engine(settings.database_url)
+
+
+@cache
+def get_sessionmaker() -> sessionmaker[Session]:
+    return sessionmaker(get_engine(), expire_on_commit=False)
+
+
+@contextmanager
+def session() -> Iterator[Session]:
+    with get_sessionmaker()() as s:
+        yield s
+{% endif %}

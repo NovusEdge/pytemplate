@@ -73,6 +73,23 @@ cloud:
     cloud requires settings=pydantic
     {% endif %}
 
+db:
+  type: str
+  choices: [none, sqlite, postgres]
+  default: none
+  validator: >-
+    {% if db != 'none' and settings == 'none' %}
+    db requires settings=pydantic
+    {% endif %}
+
+redis:
+  type: bool
+  default: false
+  validator: >-
+    {% if redis and settings == 'none' %}
+    redis requires settings=pydantic
+    {% endif %}
+
 container:
   type: bool
   default: "{{ preset in ['api', 'pipeline'] }}"
@@ -91,6 +108,13 @@ py_tag:
   when: false
   default: "py{{ python|replace('.','') }}"
 
+# Only the api preset runs an event loop, so only it gets an async engine.
+# Alembic always drives a sync engine, which keeps env.py free of loop plumbing.
+db_async:
+  type: bool
+  when: false
+  default: "{{ db != 'none' and preset == 'api' }}"
+
 runtime_deps:
   type: yaml
   when: false
@@ -100,7 +124,11 @@ runtime_deps:
       + (['google-cloud-core'] if cloud == 'gcp' else [])
       + (['typer'] if preset == 'cli' else [])
       + (['fastapi', 'uvicorn'] if preset == 'api' else [])
-      + (['dagster'] if preset == 'pipeline' else [])) | tojson }}
+      + (['dagster'] if preset == 'pipeline' else [])
+      + (['sqlalchemy>=2.0.44', 'alembic>=1.13'] if db != 'none' else [])
+      + (['psycopg[binary]>=3.2'] if db == 'postgres' else [])
+      + (['aiosqlite>=0.20'] if db == 'sqlite' and preset == 'api' else [])
+      + (['redis>=5.0'] if redis else [])) | tojson }}
 
 _tasks:
   - "git init -q -b main"

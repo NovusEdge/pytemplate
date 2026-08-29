@@ -1,3 +1,8 @@
+{%- set services = [] -%}
+{%- if cloud == 'aws' %}{% set _ = services.append('localstack') %}{% endif -%}
+{%- if cloud == 'gcp' %}{% set _ = services.append('gcloud-emulator') %}{% endif -%}
+{%- if db == 'postgres' %}{% set _ = services.append('postgres') %}{% endif -%}
+{%- if redis %}{% set _ = services.append('redis') %}{% endif -%}
 services:
   app:
     build: .
@@ -5,23 +10,49 @@ services:
       - "8000:8000"
 {% endif %}    env_file:
       - .env
-{% if cloud == 'aws' %}    environment:
-      {{ package_name|upper }}_AWS_ENDPOINT_URL: http://localstack:4566
-    depends_on:
-      - localstack
-
-  localstack:
+{% if services %}    environment:
+{% if cloud == 'aws' %}      {{ package_name|upper }}_AWS_ENDPOINT_URL: http://localstack:4566
+{% endif %}{% if cloud == 'gcp' %}      {{ package_name|upper }}_GCP_EMULATOR_HOST: gcloud-emulator:8085
+{% endif %}{% if db == 'postgres' %}      {{ package_name|upper }}_DATABASE_URL: postgresql+psycopg://{{ package_name }}:{{ package_name }}@postgres:5432/{{ package_name }}
+{% endif %}{% if redis %}      {{ package_name|upper }}_REDIS_URL: redis://redis:6379/0
+{% endif %}    depends_on:
+{% for s in services %}      - {{ s }}
+{% endfor %}{% endif %}
+{% if cloud == 'aws' %}  localstack:
     image: localstack/localstack:latest
     ports:
       - "4566:4566"
-{% elif cloud == 'gcp' %}    environment:
-      {{ package_name|upper }}_GCP_EMULATOR_HOST: gcloud-emulator:8085
-    depends_on:
-      - gcloud-emulator
 
-  gcloud-emulator:
+{% endif %}{% if cloud == 'gcp' %}  gcloud-emulator:
     image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
     command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
     ports:
       - "8085:8085"
+
+{% endif %}{% if db == 'postgres' %}  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: {{ package_name }}
+      POSTGRES_PASSWORD: {{ package_name }}
+      POSTGRES_DB: {{ package_name }}
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ package_name }}"]
+      interval: 5s
+      retries: 5
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+{% endif %}{% if redis %}  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 5
+
+{% endif %}{% if db == 'postgres' %}volumes:
+  pgdata:
 {% endif %}

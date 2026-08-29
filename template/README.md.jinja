@@ -7,7 +7,27 @@
 ```sh
 just check
 ```
-{% if publish %}
+{% if db != 'none' %}
+## Database
+
+Migrations live in `alembic/` and run against a sync driver, even where the app
+uses an async engine.
+
+```sh
+just migrate                  # apply everything pending
+just revision "add users"     # autogenerate from the models
+just downgrade                # roll back one
+```
+
+`just revision` inspects the live database to diff it against the models, so it
+fails unless the database is reachable{% if container %} — `docker compose up -d postgres` first{% endif %}. Without one, write the
+migration by hand or use `alembic revision` with no `--autogenerate`.
+{% endif %}{% if redis %}
+## Redis
+
+`{{ package_name }}.cache.get_client()` returns a cached client built from
+`{{ package_name|upper }}_REDIS_URL`.
+{% endif %}{% if publish %}
 ## Publishing
 
 Tagging `v*` publishes to PyPI through trusted publishing. Before the first tag,

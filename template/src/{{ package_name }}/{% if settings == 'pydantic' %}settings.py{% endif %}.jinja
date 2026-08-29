@@ -17,6 +17,12 @@ class Settings(BaseSettings):
 {% endif %}{% endif %}{% if cloud == 'gcp' %}
     gcp_project: str = ""
     gcp_emulator_host: str = ""
+{% endif %}{% if db == 'postgres' %}
+    database_url: str = "postgresql+psycopg://{{ package_name }}:{{ package_name }}@localhost:5432/{{ package_name }}"
+{% endif %}{% if db == 'sqlite' %}
+    database_url: str = "sqlite{% if db_async %}+aiosqlite{% endif %}:///./{{ package_name }}.db"
+{% endif %}{% if redis %}
+    redis_url: str = "redis://localhost:6379/0"
 {% endif %}
 
 settings = Settings()

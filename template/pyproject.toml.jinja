@@ -32,6 +32,9 @@ packages = ["src/{{ package_name }}"]
 [tool.ruff]
 line-length = 100
 target-version = "{{ py_tag }}"
+# Without this, isort treats the project's own package as third-party in any
+# file outside src/, such as alembic/env.py.
+src = ["src"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM", "ARG"]
