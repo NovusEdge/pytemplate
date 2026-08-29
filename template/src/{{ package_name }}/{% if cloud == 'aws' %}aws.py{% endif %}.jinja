@@ -1,0 +1,20 @@
+from functools import cache
+
+import boto3
+
+from .settings import settings
+
+
+@cache
+def get_session() -> boto3.Session:
+    return boto3.Session(
+        region_name=settings.aws_region,
+        profile_name=settings.aws_profile or None,
+    )
+{% if container %}
+
+# LocalStack listens on this endpoint under compose. Pass it to every client:
+#   get_session().client("s3", endpoint_url=endpoint_url())
+def endpoint_url() -> str | None:
+    return settings.aws_endpoint_url or None
+{% endif %}

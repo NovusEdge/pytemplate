@@ -1,0 +1,9 @@
+from .settings import settings
+
+
+def get_client_options() -> dict[str, str]:
+    """Keyword arguments common to every google-cloud client."""
+    options: dict[str, str] = {"project": settings.gcp_project}
+    if settings.gcp_emulator_host:
+        options["client_options"] = settings.gcp_emulator_host
+    return options

@@ -10,6 +10,13 @@ class Settings(BaseSettings):
     )
 
     log_level: str = "INFO"
-
+{% if cloud == 'aws' %}
+    aws_region: str = "eu-north-1"
+    aws_profile: str = ""
+{% if container %}    aws_endpoint_url: str = ""
+{% endif %}{% endif %}{% if cloud == 'gcp' %}
+    gcp_project: str = ""
+    gcp_emulator_host: str = ""
+{% endif %}
 
 settings = Settings()

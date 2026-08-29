@@ -60,3 +60,24 @@ def test_settings_absent_when_none(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="lib")
     assert not (out / "src/demo_proj/settings.py").exists()
     assert not (out / ".env.example").exists()
+
+
+def test_aws_module_and_dep(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", cloud="aws")
+    assert (out / "src/demo_proj/aws.py").exists()
+    assert not (out / "src/demo_proj/gcp.py").exists()
+    assert "boto3" in (out / "pyproject.toml").read_text()
+    assert "aws_region" in (out / "src/demo_proj/settings.py").read_text()
+
+
+def test_gcp_module_and_dep(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api", cloud="gcp")
+    assert (out / "src/demo_proj/gcp.py").exists()
+    assert "google-cloud-core" in (out / "pyproject.toml").read_text()
+
+
+def test_mypy_strict_off_for_cloud(tmp_path: Path) -> None:
+    plain = generate(tmp_path / "a", preset="api")
+    cloudy = generate(tmp_path / "b", preset="api", cloud="aws")
+    assert "strict = true" in (plain / "pyproject.toml").read_text()
+    assert "strict = true" not in (cloudy / "pyproject.toml").read_text()
