@@ -99,7 +99,10 @@ _tasks:
   - "git init -q -b main"
   - "uv sync"
   - "git add -A"
-  - "git -c user.useConfigOnly=false commit -qm 'Initial commit from pytemplate'"
+  # `copier update` re-runs these tasks even when nothing changed; a plain
+  # commit would fail on an empty index, leaving the tree dirty and every
+  # later update refusing to run.
+  - "git diff --cached --quiet || git -c user.useConfigOnly=false commit -qm 'Initial commit from pytemplate'"
 
 _message_after_copy: |
   {{ project_name }} is ready.
