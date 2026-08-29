@@ -2,7 +2,10 @@
 # copier requires --trust because the template declares _tasks.
 set -euo pipefail
 
-TEMPLATE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Resolve symlinks: pynew is meant to be linked into ~/.local/bin, and
+# BASH_SOURCE reports the link's own path, which would make the template
+# root that bin directory.
+TEMPLATE="$(cd "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")" && pwd)"
 
 usage() {
     echo "usage: pynew NAME [--update]" >&2
