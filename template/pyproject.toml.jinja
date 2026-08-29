@@ -9,6 +9,10 @@ requires-python = ">={{ python }}"
 dependencies = [
 {% for dep in runtime_deps %}    "{{ dep }}",
 {% endfor %}]
+{% if preset == 'cli' %}
+[project.scripts]
+{{ project_name }} = "{{ package_name }}.cli:main"
+{% endif %}
 
 [dependency-groups]
 dev = [

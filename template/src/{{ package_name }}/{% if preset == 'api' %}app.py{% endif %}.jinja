@@ -1,0 +1,20 @@
+import logging
+
+from fastapi import FastAPI
+{% if settings == 'pydantic' %}
+from .settings import settings
+{% endif %}
+
+def create_app() -> FastAPI:
+{% if settings == 'pydantic' %}    logging.basicConfig(level=settings.log_level)
+{% else %}    logging.basicConfig(level="INFO")
+{% endif %}    api = FastAPI(title="{{ project_name }}")
+
+    @api.get("/health")
+    def health() -> dict[str, str]:
+        return {"status": "ok"}
+
+    return api
+
+
+app = create_app()

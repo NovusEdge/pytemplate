@@ -126,3 +126,27 @@ def test_publish_is_opt_in(tmp_path: Path) -> None:
 def test_publish_setup_documented(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="lib", publish=True)
     assert "pending publisher" in (out / "README.md").read_text()
+
+
+def test_cli_skeleton(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="cli")
+    assert (out / "src/demo_proj/cli.py").exists()
+    assert "[project.scripts]" in (out / "pyproject.toml").read_text()
+
+
+def test_api_skeleton(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api")
+    body = (out / "src/demo_proj/app.py").read_text()
+    assert "def create_app()" in body
+    assert "/health" in body
+
+
+def test_pipeline_skeleton(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="pipeline")
+    assert (out / "src/demo_proj/jobs/example.py").exists()
+
+
+def test_lib_has_no_skeleton(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib")
+    assert not (out / "src/demo_proj/cli.py").exists()
+    assert not (out / "src/demo_proj/app.py").exists()
