@@ -1,0 +1,17 @@
+FROM ghcr.io/astral-sh/uv:python{{ python }}-bookworm-slim AS build
+WORKDIR /app
+COPY pyproject.toml uv.lock* ./
+RUN uv sync --no-dev --no-install-project
+COPY . .
+RUN uv sync --no-dev
+
+FROM python:{{ python }}-slim-bookworm
+WORKDIR /app
+COPY --from=build /app/.venv /app/.venv
+COPY --from=build /app/src /app/src
+ENV PATH="/app/.venv/bin:$PATH"
+{% if preset == 'api' %}EXPOSE 8000
+CMD ["uvicorn", "{{ package_name }}.app:app", "--host", "0.0.0.0", "--port", "8000"]
+{% elif preset == 'cli' %}ENTRYPOINT ["{{ project_name }}"]
+{% else %}CMD ["python", "-m", "{{ package_name }}"]
+{% endif %}

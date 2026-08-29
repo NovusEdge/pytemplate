@@ -81,3 +81,26 @@ def test_mypy_strict_off_for_cloud(tmp_path: Path) -> None:
     cloudy = generate(tmp_path / "b", preset="api", cloud="aws")
     assert "strict = true" in (plain / "pyproject.toml").read_text()
     assert "strict = true" not in (cloudy / "pyproject.toml").read_text()
+
+
+def test_container_files(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="api")
+    assert (out / "Dockerfile").exists()
+    assert (out / "compose.yaml").exists()
+
+
+def test_no_container_for_lib(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib")
+    assert not (out / "Dockerfile").exists()
+
+
+def test_compose_carries_emulator(tmp_path: Path) -> None:
+    aws = generate(tmp_path / "a", preset="api", cloud="aws")
+    plain = generate(tmp_path / "b", preset="api")
+    assert "localstack" in (aws / "compose.yaml").read_text()
+    assert "localstack" not in (plain / "compose.yaml").read_text()
+
+
+def test_lib_can_opt_into_container(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib", container=True)
+    assert (out / "Dockerfile").exists()
