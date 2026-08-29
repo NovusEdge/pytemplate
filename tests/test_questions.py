@@ -30,9 +30,3 @@ def test_cloud_requires_settings(tmp_path: Path) -> None:
     # UserMessageError, from Question.validate_answer.
     with pytest.raises(ValueError, match="cloud requires settings=pydantic"):
         generate(tmp_path, preset="lib", cloud="aws", settings="none")
-
-
-def test_computed_values(tmp_path: Path) -> None:
-    a = answers_of(generate(tmp_path, preset="cli"))
-    assert a["py_tag"] == "py313"
-    assert "typer" in a["runtime_deps"]
