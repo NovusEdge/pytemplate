@@ -104,3 +104,25 @@ def test_compose_carries_emulator(tmp_path: Path) -> None:
 def test_lib_can_opt_into_container(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="lib", container=True)
     assert (out / "Dockerfile").exists()
+
+
+def test_ci_workflow(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib")
+    wf = out / ".github/workflows/check.yml"
+    assert wf.exists()
+    body = wf.read_text()
+    assert "astral-sh/setup-uv" in body
+    assert "just check" in body
+
+
+def test_publish_is_opt_in(tmp_path: Path) -> None:
+    off = generate(tmp_path / "a", preset="lib")
+    on = generate(tmp_path / "b", preset="lib", publish=True)
+    assert not (off / ".github/workflows/publish.yml").exists()
+    assert (on / ".github/workflows/publish.yml").exists()
+    assert "id-token: write" in (on / ".github/workflows/publish.yml").read_text()
+
+
+def test_publish_setup_documented(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib", publish=True)
+    assert "pending publisher" in (out / "README.md").read_text()

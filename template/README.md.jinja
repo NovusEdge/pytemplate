@@ -7,3 +7,23 @@
 ```sh
 just check
 ```
+{% if publish %}
+## Publishing
+
+Tagging `v*` publishes to PyPI through trusted publishing. Before the first tag,
+register a pending publisher on PyPI with these exact values:
+
+- Project name: `{{ project_name }}`
+- Workflow filename: `publish.yml`
+- Environment: `pypi`
+
+A tag pushed before that step fails with an opaque authentication error.
+{% endif %}
+## Updating from the template
+
+```sh
+pynew . --update
+```
+
+Post-generation tasks do not re-run on update. Run `uv sync` yourself if an
+update changes dependencies.
