@@ -25,5 +25,5 @@ A tag pushed before that step fails with an opaque authentication error.
 pynew . --update
 ```
 
-Post-generation tasks do not re-run on update. Run `uv sync` yourself if an
-update changes dependencies.
+Post-generation tasks re-run on update, so `uv sync` picks up any dependency
+changes automatically.
