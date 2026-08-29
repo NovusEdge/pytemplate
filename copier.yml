@@ -94,3 +94,14 @@ runtime_deps:
       + (['typer'] if preset == 'cli' else [])
       + (['fastapi', 'uvicorn'] if preset == 'api' else [])
       + (['dagster'] if preset == 'pipeline' else [])) | tojson }}
+
+_tasks:
+  - "git init -q -b main"
+  - "uv sync"
+  - "git add -A"
+  - "git -c user.useConfigOnly=false commit -qm 'Initial commit from pytemplate'"
+
+_message_after_copy: |
+  {{ project_name }} is ready.
+
+    cd {{ project_name }} && just check
