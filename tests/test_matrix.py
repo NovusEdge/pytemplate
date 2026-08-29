@@ -2,6 +2,8 @@ import compileall
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from .conftest import generate
 
 
@@ -158,3 +160,18 @@ def test_lib_has_no_skeleton(tmp_path: Path) -> None:
     out = generate(tmp_path, preset="lib")
     assert not (out / "src/demo_proj/cli.py").exists()
     assert not (out / "src/demo_proj/app.py").exists()
+
+
+def test_no_empty_jobs_dir(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib")
+    assert not (out / "src/demo_proj/jobs").exists()
+
+
+def test_no_empty_workflows_dir(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib", ci="none", publish=False)
+    assert not (out / ".github").exists()
+
+
+def test_package_name_rejects_keyword(tmp_path: Path) -> None:
+    with pytest.raises(ValueError):
+        generate(tmp_path, preset="lib", project_name="class")

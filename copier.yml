@@ -26,6 +26,13 @@ package_name:
     {% if not package_name.isidentifier() %}
     package_name must be a valid Python identifier
     {% endif %}
+    {% if package_name in ["False", "None", "True", "and", "as", "assert",
+      "async", "await", "break", "class", "continue", "def", "del", "elif",
+      "else", "except", "finally", "for", "from", "global", "if", "import",
+      "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise",
+      "return", "try", "while", "with", "yield"] %}
+    package_name must not be a Python keyword: {{ package_name }}
+    {% endif %}
 
 description:
   type: str
