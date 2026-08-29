@@ -1,0 +1,29 @@
+_min_copier_version: "9.7.0"
+_subdirectory: template
+_exclude:
+  - "copier.yml"
+  - "~*"
+  - "*.py[co]"
+  - "__pycache__"
+  - ".git"
+  - ".DS_Store"
+
+preset:
+  type: str
+  help: Project archetype
+  choices: [lib, cli, api, pipeline]
+  default: lib
+
+project_name:
+  type: str
+  help: Project name, used for the directory and the distribution
+
+description:
+  type: str
+  help: One-line description
+  default: ""
+
+author:
+  type: str
+  help: Author name
+  default: ""
