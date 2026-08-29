@@ -37,6 +37,11 @@ author:
   help: Author name
   default: ""
 
+year:
+  type: str
+  help: Copyright year
+  default: "2026"
+
 license:
   type: str
   choices: [Apache-2.0, MIT, proprietary]

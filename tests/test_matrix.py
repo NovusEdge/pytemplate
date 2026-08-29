@@ -42,3 +42,8 @@ def test_computed_values_reach_pyproject(tmp_path: Path) -> None:
     body = (out / "pyproject.toml").read_text()
     assert 'target-version = "py313"' in body
     assert '"typer",' in body
+
+
+def test_license_year_is_answerable(tmp_path: Path) -> None:
+    out = generate(tmp_path, preset="lib", year="2031")
+    assert "2031" in (out / "LICENSE").read_text()
