@@ -15,11 +15,19 @@ update="${2:-}"
 [[ -z "$name" || "$name" == "--update" || -n "${3:-}" ]] && usage
 [[ -n "$update" && "$update" != "--update" ]] && usage
 
+# copier is a dev dependency of this repo, so it is absent from PATH when
+# pynew is symlinked into ~/.local/bin. uvx runs it without an install.
+if command -v copier >/dev/null 2>&1; then
+    copier=(copier)
+else
+    copier=(uvx copier)
+fi
+
 if [[ "$update" == "--update" ]]; then
-    exec copier update --trust "$name"
+    exec "${copier[@]}" update --trust "$name"
 fi
 
 # copier.yml's year default (2026) is a fallback for direct `copier copy`
 # invocations; jinja2's {% now %} needs an extension copier does not
 # register, so the real year is supplied here instead.
-exec copier copy --trust -d year="$(date +%Y)" "$TEMPLATE" "$name"
+exec "${copier[@]}" copy --trust -d year="$(date +%Y)" "$TEMPLATE" "$name"
