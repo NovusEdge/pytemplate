@@ -1,0 +1,27 @@
+services:
+  app:
+    build: .
+{% if preset == 'api' %}    ports:
+      - "8000:8000"
+{% endif %}    env_file:
+      - .env
+{% if cloud == 'aws' %}    environment:
+      {{ package_name|upper }}_AWS_ENDPOINT_URL: http://localstack:4566
+    depends_on:
+      - localstack
+
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+{% elif cloud == 'gcp' %}    environment:
+      {{ package_name|upper }}_GCP_EMULATOR_HOST: gcloud-emulator:8085
+    depends_on:
+      - gcloud-emulator
+
+  gcloud-emulator:
+    image: gcr.io/google.com/cloudsdktool/google-cloud-cli:emulators
+    command: gcloud beta emulators pubsub start --host-port=0.0.0.0:8085
+    ports:
+      - "8085:8085"
+{% endif %}

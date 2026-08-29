@@ -1,0 +1,17 @@
+[project]
+name = "pytemplate"
+version = "0.1.0"
+description = "Copier template for Python projects"
+requires-python = ">=3.13"
+
+[dependency-groups]
+dev = [
+    "copier>=9.17.2",
+    "pytest>=8.0",
+    "pyyaml>=6.0",
+    "ruff>=0.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["slow: generates a project and runs its full check suite"]

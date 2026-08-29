@@ -1,0 +1,117 @@
+_min_copier_version: "9.7.0"
+_subdirectory: template
+_exclude:
+  - "copier.yml"
+  - "~*"
+  - "*.py[co]"
+  - "__pycache__"
+  - ".git"
+  - ".DS_Store"
+
+preset:
+  type: str
+  help: Project archetype
+  choices: [lib, cli, api, pipeline]
+  default: lib
+
+project_name:
+  type: str
+  help: Project name, used for the directory and the distribution
+
+package_name:
+  type: str
+  help: Importable package name
+  default: "{{ project_name|lower|replace('-','_')|replace(' ','_') }}"
+  validator: >-
+    {% if not package_name.isidentifier() %}
+    package_name must be a valid Python identifier
+    {% endif %}
+    {% if package_name in ["False", "None", "True", "and", "as", "assert",
+      "async", "await", "break", "class", "continue", "def", "del", "elif",
+      "else", "except", "finally", "for", "from", "global", "if", "import",
+      "in", "is", "lambda", "nonlocal", "not", "or", "pass", "raise",
+      "return", "try", "while", "with", "yield"] %}
+    package_name must not be a Python keyword: {{ package_name }}
+    {% endif %}
+
+description:
+  type: str
+  help: One-line description
+  default: ""
+
+author:
+  type: str
+  help: Author name
+  default: ""
+
+year:
+  type: str
+  help: Copyright year
+  default: "2026"
+
+license:
+  type: str
+  choices: [Apache-2.0, MIT, proprietary]
+  default: Apache-2.0
+
+python:
+  type: str
+  help: Target Python version
+  default: "3.13"
+
+settings:
+  type: str
+  choices: [none, pydantic]
+  default: "{{ 'none' if preset == 'lib' else 'pydantic' }}"
+
+cloud:
+  type: str
+  choices: [none, aws, gcp]
+  default: none
+  validator: >-
+    {% if cloud != 'none' and settings == 'none' %}
+    cloud requires settings=pydantic
+    {% endif %}
+
+container:
+  type: bool
+  default: "{{ preset in ['api', 'pipeline'] }}"
+
+ci:
+  type: str
+  choices: [none, github]
+  default: github
+
+publish:
+  type: bool
+  default: false
+
+py_tag:
+  type: str
+  when: false
+  default: "py{{ python|replace('.','') }}"
+
+runtime_deps:
+  type: yaml
+  when: false
+  default: >-
+    {{ ((['pydantic-settings>=2'] if settings == 'pydantic' else [])
+      + (['boto3'] if cloud == 'aws' else [])
+      + (['google-cloud-core'] if cloud == 'gcp' else [])
+      + (['typer'] if preset == 'cli' else [])
+      + (['fastapi', 'uvicorn'] if preset == 'api' else [])
+      + (['dagster'] if preset == 'pipeline' else [])) | tojson }}
+
+_tasks:
+  - "git init -q -b main"
+  - "uv sync"
+  - "git add -A"
+  # `copier update` re-runs these tasks even when nothing changed; a plain
+  # commit would fail on an empty index, leaving the tree dirty and every
+  # later update refusing to run.
+  - "git diff --cached --quiet || git -c user.useConfigOnly=false commit -qm 'Initial commit from pytemplate'"
+
+_message_after_copy: |
+  {{ project_name }} is ready.
+
+    cd {{ project_name }} && just check
